@@ -1,21 +1,17 @@
 import React from "react";
 import { Row, Col ,Button, Typography } from 'antd';
 import firebase, { auth } from '../../firebase/config';
+import { useHistory} from 'react-router-dom';
 
 const {Title} = Typography;
 const fbProvider = new firebase.auth.FacebookAuthProvider();
-// const fbProvider =  firebase.auth.FacebookAuthProvider();
+
 
 export default function Login() {
   const handleFbLogin = () => {
-    auth.signInWithPopup(fbProvider).catch((err) => {
-      console.log(err);
-    })
-  }
-
-  auth.onAuthStateChanged((user) => {
-    console.log({ user });
-  })
+    auth.signInWithPopup(fbProvider);
+  };
+  
 
   return (
     <div>
