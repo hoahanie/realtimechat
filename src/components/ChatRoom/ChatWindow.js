@@ -1,8 +1,9 @@
 import { UserAddOutlined } from "@ant-design/icons";
-import React from "react";
+import React, { useContext } from "react";
 import styled from "styled-components";
 import { Button, Tooltip, Avatar, Form, Input, Alert } from "antd";
 import Message from "./Message";
+import { AppContext } from "../../Context/AppProvider";
 
 const HeaderStyled = styled.div`
   display: flex;
@@ -52,44 +53,51 @@ const FormStyled = styled.div`
   padding: 2px 2px 2px 0;
   border: 1px solid rgb(230, 230, 230);
   border-radius: 2px;
-.ant-form-item {
-  flex: 1;
-  margin-bottom: 0;
-}
-
+  .ant-form-item {
+    flex: 1;
+    margin-bottom: 0;
+  }
 `;
 
 const MessageListStyled = styled.div`
-  max-height:100%;
+  max-height: 100%;
   overflow-y: auto;
 `;
 
 export default function ChatWindow() {
+  const { selectedRoom, rooms, members, setIsInviteMemberVisible, isInviteMemberVisible } =
+    useContext(AppContext);
+  
   return (
     <WrapperStyled>
       <HeaderStyled>
         <div className="header__info">
-          <p className="header__title">Room 1</p>
-          <span className="header__description"> Day la Room 1</span>
+          <p className="header__title">{selectedRoom.name}</p>
+          <span className="header__description">
+            {" "}
+            {selectedRoom.description}
+          </span>
         </div>
         <ButtonGroupStyled>
-          <Button icon={<UserAddOutlined />} type="text">
-            {" "}
+          <Button
+            icon={<UserAddOutlined />}
+            type="text"
+            onClick={() => {
+              setIsInviteMemberVisible(true);
+            }}
+          >
             Moi
           </Button>
           <Avatar.Group size="small" maxCount={2}>
-            <Tooltip title="a">
-              <Avatar>A</Avatar>
-            </Tooltip>
-            <Tooltip title="a">
-              <Avatar>B</Avatar>
-            </Tooltip>
-            <Tooltip title="a">
-              <Avatar>C</Avatar>
-            </Tooltip>
-            <Tooltip title="a">
-              <Avatar>D</Avatar>
-            </Tooltip>
+            {members.map((member) => (
+              <Tooltip title={member.displayName} key={member.id}>
+                <Avatar src={member.photoURL}>
+                  {member.photoURL
+                    ? ""
+                    : member.displayName?.charAt(0)?.toUpperCase()}
+                </Avatar>
+              </Tooltip>
+            ))}
           </Avatar.Group>
         </ButtonGroupStyled>
       </HeaderStyled>
@@ -99,25 +107,25 @@ export default function ChatWindow() {
             text="Test"
             photoURL={null}
             displayName="Tung"
-            createAt={121311213}
+            createdAt={121311213}
           />
           <Message
             text="Test 123"
             photoURL={null}
             displayName="Tung"
-            createAt={121311213}
+            createdAt={121311213}
           />
           <Message
             text="Test abc"
             photoURL={null}
             displayName="Tung"
-            createAt={121311213}
+            createdAt={121311213}
           />
           <Message
             text="Test"
             photoURL={null}
             displayName="Tung"
-            createAt={121311213}
+            createdAt={121311213}
           />
         </MessageListStyled>
         <FormStyled>
@@ -125,7 +133,7 @@ export default function ChatWindow() {
             <Input
               placeholder="Nhap tin nhan.."
               bordered={false}
-              autocomplete='off'
+              autocomplete="off"
             />
           </Form.Item>
           <Button>Gui</Button>
@@ -134,3 +142,4 @@ export default function ChatWindow() {
     </WrapperStyled>
   );
 }
+
