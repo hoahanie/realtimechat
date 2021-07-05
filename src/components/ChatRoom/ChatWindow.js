@@ -1,9 +1,12 @@
 import { UserAddOutlined } from "@ant-design/icons";
-import React, { useContext } from "react";
+import React, { useContext, useState } from "react";
 import styled from "styled-components";
 import { Button, Tooltip, Avatar, Form, Input, Alert } from "antd";
 import Message from "./Message";
 import { AppContext } from "../../Context/AppProvider";
+import { AuthContext } from "../../Context/AuthProvider";
+import { addDocument } from "../../firebase/services";
+import useFirestore from "../../hooks/useFirestore";
 
 const HeaderStyled = styled.div`
   display: flex;
@@ -46,7 +49,7 @@ const ContentStyled = styled.div`
   justify-content: flex-end;
 `;
 
-const FormStyled = styled.div`
+const FormStyled = styled(Form)`
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -65,81 +68,116 @@ const MessageListStyled = styled.div`
 `;
 
 export default function ChatWindow() {
-  const { selectedRoom, rooms, members, setIsInviteMemberVisible, isInviteMemberVisible } =
-    useContext(AppContext);
-  
+  const {
+    selectedRoom,
+    members,
+    setIsInviteMemberVisible,
+  } = useContext(AppContext);
+  const {
+    user: { uid, photoURL, displayName },
+  } = useContext(AuthContext);
+
+  const [inputValue, setInputValue] = useState("");
+  const [form] = Form.useForm();
+  const handleInputChange = (e) => {
+    console.log(e.target.value);
+    setInputValue(e.target.value);
+  };
+
+  const handleOnSubmit = () => {
+    addDocument("messages", {
+      text: inputValue,
+      uid,
+      photoURL,
+      roomId: selectedRoom.id,
+      displayName,
+    });
+
+    form.resetFields(["message"]);
+  };
+
+  const condition = React.useMemo(
+    () => ({
+      fieldName: "roomId",
+      operator: "==",
+      compareValue: selectedRoom.id,
+    }),
+    [selectedRoom.id]
+  );
+  const messages = useFirestore("messages", condition);
+  console.log({ messages });
   return (
     <WrapperStyled>
-      <HeaderStyled>
-        <div className="header__info">
-          <p className="header__title">{selectedRoom.name}</p>
-          <span className="header__description">
-            {" "}
-            {selectedRoom.description}
-          </span>
-        </div>
-        <ButtonGroupStyled>
-          <Button
-            icon={<UserAddOutlined />}
-            type="text"
-            onClick={() => {
-              setIsInviteMemberVisible(true);
-            }}
-          >
-            Moi
-          </Button>
-          <Avatar.Group size="small" maxCount={2}>
-            {members.map((member) => (
-              <Tooltip title={member.displayName} key={member.id}>
-                <Avatar src={member.photoURL}>
-                  {member.photoURL
-                    ? ""
-                    : member.displayName?.charAt(0)?.toUpperCase()}
-                </Avatar>
-              </Tooltip>
-            ))}
-          </Avatar.Group>
-        </ButtonGroupStyled>
-      </HeaderStyled>
-      <ContentStyled>
-        <MessageListStyled>
-          <Message
-            text="Test"
-            photoURL={null}
-            displayName="Tung"
-            createdAt={121311213}
-          />
-          <Message
-            text="Test 123"
-            photoURL={null}
-            displayName="Tung"
-            createdAt={121311213}
-          />
-          <Message
-            text="Test abc"
-            photoURL={null}
-            displayName="Tung"
-            createdAt={121311213}
-          />
-          <Message
-            text="Test"
-            photoURL={null}
-            displayName="Tung"
-            createdAt={121311213}
-          />
-        </MessageListStyled>
-        <FormStyled>
-          <Form.Item>
-            <Input
-              placeholder="Nhap tin nhan.."
-              bordered={false}
-              autocomplete="off"
-            />
-          </Form.Item>
-          <Button>Gui</Button>
-        </FormStyled>
-      </ContentStyled>
+      {selectedRoom.id ? (
+        <>
+          <HeaderStyled>
+            <div className="header__info">
+              <p className="header__title">{selectedRoom.name}</p>
+              <span className="header__description">
+                {" "}
+                {selectedRoom.description}
+              </span>
+            </div>
+            <ButtonGroupStyled>
+              <Button
+                icon={<UserAddOutlined />}
+                type="text"
+                onClick={() => {
+                  setIsInviteMemberVisible(true);
+                }}
+              >
+                Moi
+              </Button>
+              <Avatar.Group size="small" maxCount={2}>
+                {members.map((member) => (
+                  <Tooltip title={member.displayName} key={member.id}>
+                    <Avatar src={member.photoURL}>
+                      {member.photoURL
+                        ? ""
+                        : member.displayName?.charAt(0)?.toUpperCase()}
+                    </Avatar>
+                  </Tooltip>
+                ))}
+              </Avatar.Group>
+            </ButtonGroupStyled>
+          </HeaderStyled>
+          <ContentStyled>
+            <MessageListStyled>
+              {messages.map((mes) => (
+                <Message
+                  key={mes.id}
+                  text={mes.text}
+                  photoURL={mes.photoURL}
+                  displayName={mes.displayName}
+                  createdAt={mes.createdAt}
+                />
+              ))}
+            </MessageListStyled>
+            <FormStyled form={form}>
+              <Form.Item name="message">
+                <Input
+                  onChange={handleInputChange}
+                  onPressEnter={handleOnSubmit}
+                  placeholder="Nhap tin nhan.."
+                  bordered={false}
+                  autocomplete="off"
+                />
+              </Form.Item>
+              <Button type="primary" onClick={handleOnSubmit}>
+                Gui
+              </Button>
+            </FormStyled>
+          </ContentStyled>
+        </>
+      ) : (
+        <Alert
+          message="Hay chon phong"
+          type="info"
+          showIcon
+          style={{ margin: 5 }}
+          closable
+        />
+      )}
     </WrapperStyled>
   );
 }
-
